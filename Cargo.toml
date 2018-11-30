@@ -1,0 +1,9 @@
+[package]
+name = "loe"
+version = "0.1.0"
+authors = ["lausek <root@lausek.eu>"]
+edition = "2018"
+
+[dependencies]
+lazy_static = "1.2.0"
+rustbox = "^0.11.0"
