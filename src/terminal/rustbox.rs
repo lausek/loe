@@ -1,11 +1,12 @@
 use std::time::Duration;
 
 use rustbox::Key as RustBoxKey;
-use rustbox::{Color, Style, OutputMode, RustBox};
+use rustbox::{Color, OutputMode, RustBox, Style};
 
 use crate::input::{Event, Key};
 use crate::terminal::{Position, Terminal};
 
+pub type RustBoxColor = Color;
 pub type RustBoxStyle = Style;
 
 pub struct RustBoxTerminal
@@ -34,11 +35,13 @@ impl RustBoxTerminal
 
 impl Terminal for RustBoxTerminal
 {
-    fn set_cursor(&self, x: isize, y: isize) {
+    fn set_cursor(&self, x: isize, y: isize)
+    {
         self.rustbox.set_cursor(x, y);
     }
 
-    fn size(&self) -> (usize, usize) {
+    fn size(&self) -> (usize, usize)
+    {
         (self.rustbox.width(), self.rustbox.height())
     }
 
@@ -69,12 +72,13 @@ impl Terminal for RustBoxTerminal
         }
     }
 
-    fn print(&self, position: Position, style: Style, content: &str)
+    fn print(&self, position: Position, style: Style, color: crate::terminal::Color, content: &str)
     {
         let style = rustbox::Style::empty();
-        let (fg, bg) = (Color::White, Color::Black);
+        let (fg, bg) = color;
         let (x, y) = position;
-        self.rustbox.print(x as usize, y as usize, style, fg, bg, content);
+        self.rustbox
+            .print(x as usize, y as usize, style, fg, bg, content);
     }
 
     fn present(&self)

@@ -18,7 +18,8 @@ impl Buffers
         Ok(())
     }
 
-    pub fn get(&self, path: &str) -> Option<&Buffer> {
+    pub fn get(&self, path: &str) -> Option<&Buffer>
+    {
         for (i, buffer) in self.buffers.iter().enumerate() {
             if buffer.src_path == path {
                 return self.buffers.get(i);
@@ -48,11 +49,19 @@ impl Buffer
         Ok(buffer)
     }
 
-    pub fn at(&self, line: usize) -> Option<&str> {
+    pub fn at(&self, line: usize) -> Option<&str>
+    {
         self.content.get(line).and_then(|c| Some(c.as_ref()))
     }
 
-    pub fn cursor(&self) -> Position {
+    pub fn cursor(&self) -> Position
+    {
         self.cursor
+    }
+
+    pub fn move_cursor(&mut self, x: isize, y: isize)
+    {
+        self.cursor.0 += x;
+        self.cursor.1 += y;
     }
 }
