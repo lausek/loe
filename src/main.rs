@@ -10,6 +10,7 @@ mod config;
 mod input;
 mod mode;
 mod terminal;
+mod view;
 
 use self::app::App;
 use self::config::Config;

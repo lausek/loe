@@ -1,13 +1,14 @@
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Arc;
 use std::thread;
+use std::vec::IntoIter;
 
 use crate::buffer::{Buffer, Buffers};
 use crate::config::Config;
 use crate::input::{Event, Key, Key::*};
 use crate::mode::{Mode, Mode::*};
-use crate::terminal::rustbox::RustBoxTerminal;
 use crate::terminal::{Style, Terminal};
+use crate::view::View;
 
 pub struct App
 {
@@ -18,8 +19,8 @@ pub struct App
     buffer: Option<Buffer>,
     current_buffer: Option<String>,
     margin: (isize, isize),
-    view: Arc<Terminal + Sync + Send>,
     events: Receiver<Event>,
+    view: View,
 }
 
 impl App
@@ -30,17 +31,16 @@ impl App
 
         let app = Self {
             config,
-            //buffers: Buffers::new(),
             buffer: None,
             current_buffer: None,
             command_buffer: String::new(),
             margin: (5, 0),
-            view: Arc::new(RustBoxTerminal::new()),
             events: receiver,
             mode: Mode::View,
+            view: View::new(),
         };
 
-        let mut r = Arc::clone(&app.view);
+        let mut r = app.view.terminal();
         thread::spawn(move || loop {
             if let Some(event) = r.listen() {
                 sender.send(event).ok();
@@ -55,10 +55,6 @@ impl App
         if let Some(arg) = args.into_iter().skip(1).next() {
             self.buffer = Buffer::load(arg.as_ref()).ok();
         }
-        //.map(|arg| {
-        //    //self.buffers.open(arg.as_ref());
-        //    //self.current_buffer = Some(arg);
-        //});
         self
     }
 
@@ -76,36 +72,35 @@ impl App
 
     pub fn render(&mut self)
     {
-        if let Some(buffer) = &self.buffer {
-            let style = rustbox::RB_NORMAL;
+        if let Some(buffer) = &mut self.buffer {
             let color = (rustbox::Color::White, rustbox::Color::Black);
-            let offset = 0;
             let (w, h) = {
                 let size = self.view.size();
                 (size.0, size.1 - 1)
             };
 
-            for i in 0..h {
-                if let Some(line) = buffer.at(i + offset) {
-                    self.view
-                        .print((self.margin.0, i as isize), style, color, line);
-                    self.view
-                        .print((0, i as isize), style, color, format!(" {}", i).as_ref());
-                } else {
-                    break;
-                }
+            {
+                let area = (self.margin.0 as usize, 0usize, w, h);
+                let lines_range = (0..10)
+                    .map(|i| (i, buffer.at(i)))
+                    .collect::<Vec<_>>()
+                    .into_iter();
+                self.view.render_buffer(lines_range, area);
             }
 
-            let (cx, cy) = buffer.cursor();
-            self.view.set_cursor(self.margin.0 + cx, cy);
+            let cursor_pos = buffer.cursor();
+            self.view
+                .set_cursor(self.margin.0 + cursor_pos.0, cursor_pos.1);
 
-            let status_color = (rustbox::Color::Black, rustbox::Color::Green);
             let status_text = match &self.mode {
-                Command => format!(":{} >> {}c {}r", self.command_buffer, cx, cy),
-                _ => format!("{} >> {}c {}r", self.mode, cx, cy),
+                Command => format!(
+                    ":{} >> {}c {}r",
+                    self.command_buffer, cursor_pos.0, cursor_pos.1
+                ),
+                _ => format!("{} >> {}c {}r", self.mode, cursor_pos.0, cursor_pos.1),
             };
             self.view
-                .print((0, h as isize), style, status_color, status_text.as_ref());
+                .render_status(cursor_pos, h as isize, status_text.as_str());
         } else {
             log!("couldn't acquire current_buffer");
         }
