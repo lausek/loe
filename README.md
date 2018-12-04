@@ -1,3 +1,3 @@
 # lö
 
-lauseks own editor
+lausek's own editor
