@@ -26,3 +26,10 @@ pub enum Key
     Char(char),
     Ctrl(char),
 }
+
+pub enum CursorMove
+{
+    Absolute(i64, i64),
+    Relative(i64, i64),
+    EndOfRow(i64),
+}

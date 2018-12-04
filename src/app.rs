@@ -5,7 +5,7 @@ use std::vec::IntoIter;
 
 use crate::buffer::{Buffer, Buffers};
 use crate::config::Config;
-use crate::input::{Event, Key, Key::*};
+use crate::input::{CursorMove::*, Event, Key, Key::*};
 use crate::mode::{Mode, Mode::*};
 use crate::terminal::{Style, Terminal};
 use crate::view::View;
@@ -115,22 +115,22 @@ impl App
                     Event::Resize => self.render(),
                     Event::Key(Up) => {
                         if let Some(buffer) = &mut self.buffer {
-                            buffer.move_cursor(0, -1);
+                            buffer.move_cursor(Relative(0, -1));
                         }
                     }
                     Event::Key(Down) => {
                         if let Some(buffer) = &mut self.buffer {
-                            buffer.move_cursor(0, 1);
+                            buffer.move_cursor(Relative(0, 1));
                         }
                     }
                     Event::Key(Left) => {
                         if let Some(buffer) = &mut self.buffer {
-                            buffer.move_cursor(-1, 0);
+                            buffer.move_cursor(Relative(-1, 0));
                         }
                     }
                     Event::Key(Right) => {
                         if let Some(buffer) = &mut self.buffer {
-                            buffer.move_cursor(1, 0);
+                            buffer.move_cursor(Relative(1, 0));
                         }
                     }
                     evt => match &self.mode {

@@ -2,6 +2,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
+use crate::input::{CursorMove, CursorMove::*};
 use crate::terminal::Position;
 
 pub struct Buffers
@@ -69,7 +70,6 @@ impl Buffer
     pub fn write(&self, path: &PathBuf) -> Result<(), std::io::Error>
     {
         let mut buffer = vec![];
-        //log!(format!("writing `{}` now", path));
         File::open(path)
             .or(File::create(path))
             .and_then(|mut file| {
@@ -91,7 +91,7 @@ impl Buffer
         let (cx, cy) = self.get_cursor();
         if let Some(line) = self.content.get_mut(cy as usize) {
             line.insert(cx as usize, c);
-            self.move_cursor(1, 0);
+            self.move_cursor(Relative(1, 0));
             Ok(())
         } else {
             Err("line not available")
@@ -101,6 +101,7 @@ impl Buffer
     pub fn insert_newline(&mut self) -> Result<(), &'static str>
     {
         let (cx, cy) = self.get_cursor();
+        log!("newline!");
         let line = self.content.get_mut(cy as usize);
         if line.is_none() {
             return Err("line not available");
@@ -116,7 +117,7 @@ impl Buffer
             self.content.insert((cy + 1) as usize, right);
         }
 
-        self.move_cursor_abs(0, cy + 1);
+        self.move_cursor(Absolute(0, cy + 1));
 
         Ok(())
     }
@@ -131,11 +132,11 @@ impl Buffer
             let len = line.len() as i64;
             if 0 <= before && before < len {
                 line.remove(before as usize);
-                self.move_cursor(-1, 0);
+                self.move_cursor(Relative(-1, 0));
             }
             if before < 0 && len == 0 && 1 < self.content.len() {
                 self.content.remove(cy as usize);
-                self.move_cursor(0, -1);
+                self.move_cursor(EndOfRow(cy-1));
             }
             Ok(())
         } else {
@@ -153,24 +154,31 @@ impl Buffer
         self.cursor
     }
 
-    pub fn move_cursor_abs(&mut self, x: i64, y: i64)
+    pub fn move_cursor(&mut self, mv: CursorMove)
     {
+        let (x, y) = match mv {
+            Absolute(x, y) => (x, y),
+            EndOfRow(y) => (0, y),
+            Relative(rx, ry) => {
+                let (cx, cy) = self.get_cursor();
+                (cx + rx, cy + ry)
+            }
+        };
         if let Some(line) = self.content.get(y as usize) {
             self.cursor.1 = y;
             let len = line.len() as i64;
 
-            if 0 <= x {
-                self.cursor.0 = x;
-                if len <= self.cursor.0 {
-                    self.cursor.0 = len;
+            match mv {
+                EndOfRow(_) => self.cursor.0 = len,
+                _ => {
+                    if 0 <= x {
+                        self.cursor.0 = x;
+                        if len < self.cursor.0 {
+                            self.cursor.0 = len;
+                        }
+                    }
                 }
             }
         }
-    }
-
-    pub fn move_cursor(&mut self, x: i64, y: i64)
-    {
-        let (nx, ny) = (self.cursor.0 + x, self.cursor.1 + y);
-        self.move_cursor_abs(nx, ny);
     }
 }
