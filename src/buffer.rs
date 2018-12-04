@@ -136,7 +136,7 @@ impl Buffer
             }
             if before < 0 && len == 0 && 1 < self.content.len() {
                 self.content.remove(cy as usize);
-                self.move_cursor(EndOfRow(cy-1));
+                self.move_cursor(EndOfRow(cy - 1));
             }
             Ok(())
         } else {
