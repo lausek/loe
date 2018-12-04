@@ -15,10 +15,9 @@ pub struct App
     pub(crate) mode: Mode,
     pub(crate) command_buffer: String,
     config: Config,
-    //buffers: Buffers,
     buffer: Option<Buffer>,
     current_buffer: Option<String>,
-    margin: (isize, isize),
+    margin: (i64, i64),
     events: Receiver<Event>,
     view: View,
 }
@@ -72,6 +71,7 @@ impl App
 
     pub fn render(&mut self)
     {
+        self.view.clear();
         if let Some(buffer) = &mut self.buffer {
             let color = (rustbox::Color::White, rustbox::Color::Black);
             let (w, h) = {
@@ -81,14 +81,14 @@ impl App
 
             {
                 let area = (self.margin.0 as usize, 0usize, w, h);
-                let lines_range = (0..10)
-                    .map(|i| (i, buffer.at(i)))
+                let lines_range = (0..h)
+                    .map(|i| (i, buffer.get_row_at(i)))
                     .collect::<Vec<_>>()
                     .into_iter();
                 self.view.render_buffer(lines_range, area);
             }
 
-            let cursor_pos = buffer.cursor();
+            let cursor_pos = buffer.get_cursor();
             self.view
                 .set_cursor(self.margin.0 + cursor_pos.0, cursor_pos.1);
 
@@ -100,7 +100,7 @@ impl App
                 _ => format!("{} >> {}c {}r", self.mode, cursor_pos.0, cursor_pos.1),
             };
             self.view
-                .render_status(cursor_pos, h as isize, status_text.as_str());
+                .render_status(cursor_pos, h as i64, status_text.as_str());
         } else {
             log!("couldn't acquire current_buffer");
         }
@@ -133,7 +133,7 @@ impl App
                             buffer.move_cursor(1, 0);
                         }
                     }
-                    evt => match self.mode {
+                    evt => match &self.mode {
                         Command | View => match evt {
                             Event::Key(Char(c)) => self.command_push_char(c),
                             Event::Key(Enter) => self.command_commit(),
@@ -141,6 +141,25 @@ impl App
                             Event::Key(Delete) | Event::Key(Backspace) => {
                                 self.command_buffer.pop();
                             }
+                            x => log!(format!("{:?}", x)),
+                        },
+                        Insert => match evt {
+                            Event::Key(Char(c)) => {
+                                if let Some(buffer) = &mut self.buffer {
+                                    buffer.insert(c);
+                                }
+                            }
+                            Event::Key(Enter) => {
+                                if let Some(buffer) = &mut self.buffer {
+                                    buffer.insert_newline();
+                                }
+                            }
+                            Event::Key(Delete) | Event::Key(Backspace) => {
+                                if let Some(buffer) = &mut self.buffer {
+                                    buffer.remove();
+                                }
+                            }
+                            Event::Key(Esc) => self.set_mode(Mode::View),
                             x => log!(format!("{:?}", x)),
                         },
                         _ => unimplemented!(),
@@ -157,6 +176,13 @@ impl App
     {
         match self.command_buffer.as_ref() {
             "q" => self.set_mode(Mode::Exit),
+            "w" => {
+                if let Some(buffer) = &self.buffer {
+                    // TODO: take alternative path from w arguments here
+                    let path = buffer.source_path().clone().unwrap();
+                    log!(format!("{:?}", buffer.write(&path)));
+                }
+            }
             cmd => {
                 log!(format!("no action for command `{}`", cmd));
                 self.set_mode(Mode::View);

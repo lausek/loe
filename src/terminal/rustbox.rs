@@ -35,9 +35,9 @@ impl RustBoxTerminal
 
 impl Terminal for RustBoxTerminal
 {
-    fn set_cursor(&self, x: isize, y: isize)
+    fn set_cursor(&self, x: i64, y: i64)
     {
-        self.rustbox.set_cursor(x, y);
+        self.rustbox.set_cursor(x as isize, y as isize);
     }
 
     fn size(&self) -> (usize, usize)
@@ -84,5 +84,10 @@ impl Terminal for RustBoxTerminal
     fn present(&self)
     {
         self.rustbox.present();
+    }
+
+    fn clear(&self)
+    {
+        self.rustbox.clear();
     }
 }

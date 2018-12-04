@@ -8,13 +8,6 @@ use crate::terminal::{Style, Terminal};
 
 const STYLE_NORMAL: Style = rustbox::RB_NORMAL;
 
-pub enum Area
-{
-    LineNumber,
-    Buffer,
-    Status,
-}
-
 pub struct View
 {
     terminal: Arc<Terminal + Sync + Send>,
@@ -24,11 +17,9 @@ impl View
 {
     pub fn new() -> Self
     {
-        let view = Self {
+        Self {
             terminal: Arc::new(RustBoxTerminal::new()),
-        };
-
-        view
+        }
     }
 
     pub fn terminal(&self) -> Arc<Terminal + Sync + Send>
@@ -41,17 +32,22 @@ impl View
         self.terminal.size()
     }
 
+    pub fn clear(&mut self)
+    {
+        self.terminal.clear();
+    }
+
     pub fn present(&mut self)
     {
         self.terminal.present();
     }
 
-    pub fn set_cursor(&mut self, x: isize, y: isize)
+    pub fn set_cursor(&mut self, x: i64, y: i64)
     {
         self.terminal.set_cursor(x, y);
     }
 
-    pub fn render_status(&mut self, cursor: (isize, isize), row: isize, status_text: &str)
+    pub fn render_status(&mut self, cursor: (i64, i64), row: i64, status_text: &str)
     {
         let (cx, cy) = cursor;
         let status_color = (rustbox::Color::Black, rustbox::Color::Green);
@@ -71,14 +67,14 @@ impl View
                 break;
             }
             self.terminal.print(
-                (area.0 as isize, i as isize),
+                (area.0 as i64, i as i64),
                 STYLE_NORMAL,
                 color,
                 line.unwrap(),
             );
             // line number
             self.terminal.print(
-                (0, i as isize),
+                (0, i as i64),
                 STYLE_NORMAL,
                 color,
                 format!(" {}", i).as_ref(),

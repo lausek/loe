@@ -1,3 +1,7 @@
+use std::fs::File;
+use std::io::Write;
+use std::path::{Path, PathBuf};
+
 use crate::terminal::Position;
 
 pub struct Buffers
@@ -7,31 +11,33 @@ pub struct Buffers
 
 impl Buffers
 {
+    /*
     pub fn new() -> Self
     {
         Self { buffers: vec![] }
     }
-
+    
     pub fn open(&mut self, path: &str) -> Result<(), std::io::Error>
     {
         self.buffers.push(Buffer::load(path)?);
         Ok(())
     }
-
+    
     pub fn get(&self, path: &str) -> Option<&Buffer>
     {
-        for (i, buffer) in self.buffers.iter().enumerate() {
-            if buffer.src_path == path {
-                return self.buffers.get(i);
-            }
-        }
+        //for (i, buffer) in self.buffers.iter().enumerate() {
+        //    if buffer.src_path == path {
+        //        return self.buffers.get(i);
+        //    }
+        //}
         None
     }
+    */
 }
 
 pub struct Buffer
 {
-    src_path: String,
+    src_path: Option<PathBuf>,
     content: Vec<String>,
     cursor: Position,
 }
@@ -40,28 +46,131 @@ impl Buffer
 {
     pub fn load(path: &str) -> Result<Self, std::io::Error>
     {
-        let content = std::fs::read_to_string(path)?;
+        let mut pathbuf = PathBuf::new();
+        let path = std::fs::canonicalize(path)?;
+        pathbuf.push(path);
+
+        log!(format!("normal path is {:?}", pathbuf));
+
+        let content = if let Ok(content) = std::fs::read_to_string(pathbuf.as_path()) {
+            content.split('\n').map(|r| String::from(r)).collect()
+        } else {
+            vec![]
+        };
+
         let buffer = Self {
             cursor: (0, 0),
-            src_path: path.to_owned(),
-            content: content.split('\n').map(|r| String::from(r)).collect(),
+            src_path: Some(pathbuf),
+            content,
         };
         Ok(buffer)
     }
 
-    pub fn at(&self, line: usize) -> Option<&str>
+    pub fn write(&self, path: &PathBuf) -> Result<(), std::io::Error>
+    {
+        let mut buffer = vec![];
+        //log!(format!("writing `{}` now", path));
+        File::open(path)
+            .or(File::create(path))
+            .and_then(|mut file| {
+                for line in &self.content {
+                    buffer.extend_from_slice(line.as_bytes());
+                    buffer.extend_from_slice(b"\n");
+                }
+                file.write_all(&buffer)
+            })
+    }
+
+    pub fn source_path(&self) -> &Option<PathBuf>
+    {
+        &self.src_path
+    }
+
+    pub fn insert(&mut self, c: char) -> Result<(), &'static str>
+    {
+        let (cx, cy) = self.get_cursor();
+        if let Some(line) = self.content.get_mut(cy as usize) {
+            line.insert(cx as usize, c);
+            self.move_cursor(1, 0);
+            Ok(())
+        } else {
+            Err("line not available")
+        }
+    }
+
+    pub fn insert_newline(&mut self) -> Result<(), &'static str>
+    {
+        let (cx, cy) = self.get_cursor();
+        let line = self.content.get_mut(cy as usize);
+        if line.is_none() {
+            return Err("line not available");
+        }
+        let line = line.unwrap();
+
+        {
+            let (left, right) = {
+                let (l, r) = line.split_at(cx as usize);
+                (l.to_string(), r.to_string())
+            };
+            *line = left;
+            self.content.insert((cy + 1) as usize, right);
+        }
+
+        self.move_cursor_abs(0, cy + 1);
+
+        Ok(())
+    }
+
+    pub fn remove(&mut self) -> Result<(), &'static str>
+    {
+        let (cx, cy) = self.get_cursor();
+        let before = cx - 1;
+
+        if let Some(line) = self.content.get_mut(cy as usize) {
+            // TODO: that is disgusting
+            let len = line.len() as i64;
+            if 0 <= before && before < len {
+                line.remove(before as usize);
+                self.move_cursor(-1, 0);
+            }
+            if before < 0 && len == 0 && 1 < self.content.len() {
+                self.content.remove(cy as usize);
+                self.move_cursor(0, -1);
+            }
+            Ok(())
+        } else {
+            Err("line not available")
+        }
+    }
+
+    pub fn get_row_at(&self, line: usize) -> Option<&str>
     {
         self.content.get(line).and_then(|c| Some(c.as_ref()))
     }
 
-    pub fn cursor(&self) -> Position
+    pub fn get_cursor(&self) -> Position
     {
         self.cursor
     }
 
-    pub fn move_cursor(&mut self, x: isize, y: isize)
+    pub fn move_cursor_abs(&mut self, x: i64, y: i64)
     {
-        self.cursor.0 += x;
-        self.cursor.1 += y;
+        if let Some(line) = self.content.get(y as usize) {
+            self.cursor.1 = y;
+            let len = line.len() as i64;
+
+            if 0 <= x {
+                self.cursor.0 = x;
+                if len <= self.cursor.0 {
+                    self.cursor.0 = len;
+                }
+            }
+        }
+    }
+
+    pub fn move_cursor(&mut self, x: i64, y: i64)
+    {
+        let (nx, ny) = (self.cursor.0 + x, self.cursor.1 + y);
+        self.move_cursor_abs(nx, ny);
     }
 }
