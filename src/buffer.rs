@@ -69,16 +69,15 @@ impl Buffer
 
     pub fn write(&self, path: &PathBuf) -> Result<(), std::io::Error>
     {
-        let mut buffer = vec![];
-        File::open(path)
-            .or(File::create(path))
-            .and_then(|mut file| {
-                for line in &self.content {
-                    buffer.extend_from_slice(line.as_bytes());
-                    buffer.extend_from_slice(b"\n");
-                }
-                file.write_all(&buffer)
-            })
+        File::create(path).and_then(|mut file| {
+            let mut buffer = vec![];
+            for line in &self.content {
+                buffer.extend_from_slice(line.as_bytes());
+                buffer.extend_from_slice(b"\n");
+            }
+            file.write_all(&buffer)?;
+            file.sync_all()
+        })
     }
 
     pub fn source_path(&self) -> &Option<PathBuf>
@@ -101,7 +100,6 @@ impl Buffer
     pub fn insert_newline(&mut self) -> Result<(), &'static str>
     {
         let (cx, cy) = self.get_cursor();
-        log!("newline!");
         let line = self.content.get_mut(cy as usize);
         if line.is_none() {
             return Err("line not available");
