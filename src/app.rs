@@ -64,9 +64,12 @@ impl App
             self.wait_for_event()?;
 
             if let Mode::Exit = self.mode {
-                return Ok(());
+                break;
             }
         }
+        self.view.clear();
+        self.view.present();
+        Ok(())
     }
 
     pub fn render(&mut self)
