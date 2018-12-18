@@ -52,7 +52,7 @@ impl App
     pub fn with_args(mut self, args: std::env::Args) -> Self
     {
         if let Some(arg) = args.into_iter().skip(1).next() {
-            self.buffer = Buffer::load(arg.as_ref()).ok();
+            self.buffer = Buffer::load(&arg).or_else(|_| Buffer::create(&arg)).ok();
         }
         self
     }

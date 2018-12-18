@@ -5,37 +5,6 @@ use std::path::{Path, PathBuf};
 use crate::input::{CursorMove, CursorMove::*};
 use crate::terminal::Position;
 
-pub struct Buffers
-{
-    buffers: Vec<Buffer>,
-}
-
-impl Buffers
-{
-    /*
-    pub fn new() -> Self
-    {
-        Self { buffers: vec![] }
-    }
-    
-    pub fn open(&mut self, path: &str) -> Result<(), std::io::Error>
-    {
-        self.buffers.push(Buffer::load(path)?);
-        Ok(())
-    }
-    
-    pub fn get(&self, path: &str) -> Option<&Buffer>
-    {
-        //for (i, buffer) in self.buffers.iter().enumerate() {
-        //    if buffer.src_path == path {
-        //        return self.buffers.get(i);
-        //    }
-        //}
-        None
-    }
-    */
-}
-
 pub struct Buffer
 {
     src_path: Option<PathBuf>,
@@ -45,6 +14,22 @@ pub struct Buffer
 
 impl Buffer
 {
+    pub fn create(path: &str) -> Result<Self, std::io::Error>
+    {
+        let mut pathbuf = PathBuf::new();
+        // TODO: normalize path here
+        pathbuf.push(path);
+
+        log!(format!("normal path is {:?}", pathbuf));
+
+        let buffer = Self {
+            cursor: (0, 0),
+            src_path: Some(pathbuf),
+            content: vec![String::new()],
+        };
+        Ok(buffer)
+    }
+
     pub fn load(path: &str) -> Result<Self, std::io::Error>
     {
         let mut pathbuf = PathBuf::new();
