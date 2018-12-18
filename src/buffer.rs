@@ -38,16 +38,12 @@ impl Buffer
 
         log!(format!("normal path is {:?}", pathbuf));
 
-        let content = if let Ok(content) = std::fs::read_to_string(pathbuf.as_path()) {
-            content.split('\n').map(|r| String::from(r)).collect()
-        } else {
-            vec![]
-        };
+        let content = std::fs::read_to_string(pathbuf.as_path())?;
 
         let buffer = Self {
             cursor: (0, 0),
             src_path: Some(pathbuf),
-            content,
+            content: content.split('\n').map(|r| String::from(r)).collect(),
         };
         Ok(buffer)
     }

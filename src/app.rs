@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::thread;
 use std::vec::IntoIter;
 
-use crate::buffer::{Buffer, Buffers};
+use crate::buffer::Buffer;
 use crate::config::Config;
 use crate::input::{CursorMove::*, Event, Key, Key::*};
 use crate::mode::{Mode, Mode::*};
