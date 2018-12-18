@@ -123,18 +123,24 @@ impl Buffer
     pub fn remove(&mut self) -> Result<(), &'static str>
     {
         let (cx, cy) = self.get_cursor();
-        let before = cx - 1;
+        let (nx, ny) = (cx - 1, cy - 1);
 
         if let Some(line) = self.content.get_mut(cy as usize) {
             // TODO: that is disgusting
             let len = line.len() as i64;
-            if 0 <= before && before < len {
-                line.remove(before as usize);
+            if 0 <= nx && nx < len {
+                line.remove(nx as usize);
                 self.move_cursor(Relative(-1, 0));
             }
-            if before < 0 && len == 0 && 1 < self.content.len() {
-                self.content.remove(cy as usize);
-                self.move_cursor(EndOfRow(cy - 1));
+            if nx < 0 && 0 <= ny && 1 < self.content.len() {
+                let removed = self.content.remove(cy as usize);
+                self.move_cursor(EndOfRow(ny));
+                if len != 0 {
+                    self.content
+                        .get_mut(ny as usize)
+                        .expect("line for appending not available")
+                        .push_str(&removed);
+                }
             }
             Ok(())
         } else {
