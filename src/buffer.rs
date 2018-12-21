@@ -144,6 +144,7 @@ impl Buffer
         let (x, y) = match mv {
             Absolute(x, y) => (x, y),
             EndOfRow(y) => (0, y),
+            CurrentRow(x) => (x, self.get_cursor().1),
             Relative(rx, ry) => {
                 let (cx, cy) = self.get_cursor();
                 (cx + rx, cy + ry)
