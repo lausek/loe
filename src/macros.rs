@@ -16,11 +16,16 @@ macro_rules! log {
         crate::macros::LOGFILE
             .lock()
             .unwrap()
-            .write_all(time.as_bytes());
+            .write_all(time.as_bytes())
+            .unwrap();
         crate::macros::LOGFILE
             .lock()
             .unwrap()
-            .write_all($msg.as_bytes());
-        crate::macros::LOGFILE.lock().unwrap().write(b"\n");
+            .write_all($msg.as_bytes())
+            .unwrap();
+        crate::macros::LOGFILE.lock().unwrap().write_all(b"\n").unwrap();
+    }};
+    ($msg:expr, $($x:expr),+) => {{
+        log!(format!($msg, $($x),+));
     }};
 }

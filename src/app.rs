@@ -1,13 +1,11 @@
-use std::sync::mpsc::{channel, Receiver, Sender};
-use std::sync::Arc;
+use std::sync::mpsc::{channel, Receiver};
 use std::thread;
-use std::vec::IntoIter;
 
 use crate::buffer::Buffer;
+use crate::cmd::{CommandManager, StandardPlugin};
 use crate::config::Config;
-use crate::input::{CursorMove::*, Event, Key, Key::*};
+use crate::input::{CursorMove::*, Event, Key::*};
 use crate::mode::{Mode, Mode::*};
-use crate::terminal::{Style, Terminal};
 use crate::view::View;
 
 pub struct App
@@ -17,6 +15,7 @@ pub struct App
     config: Config,
     buffer: Option<Buffer>,
     current_buffer: Option<String>,
+    command_manager: CommandManager,
     margin: (i64, i64),
     events: Receiver<Event>,
     view: View,
@@ -28,23 +27,26 @@ impl App
     {
         let (sender, receiver) = channel();
 
-        let app = Self {
+        let mut app = Self {
             config,
             buffer: None,
             current_buffer: None,
             command_buffer: String::new(),
+            command_manager: CommandManager::new(),
             margin: (5, 0),
             events: receiver,
             mode: Mode::View,
             view: View::new(),
         };
 
-        let mut r = app.view.terminal();
+        let r = app.view.terminal();
         thread::spawn(move || loop {
             if let Some(event) = r.listen() {
                 sender.send(event).ok();
             }
         });
+
+        app.command_manager.add_plugin(StandardPlugin::load());
 
         app
     }
@@ -165,7 +167,6 @@ impl App
                             Event::Key(Esc) => self.set_mode(Mode::View),
                             x => log!(format!("{:?}", x)),
                         },
-                        _ => unimplemented!(),
                     },
                 }
                 log!(self.command_buffer);
@@ -177,35 +178,55 @@ impl App
 
     pub fn command_commit(&mut self)
     {
-        match self.command_buffer.as_ref() {
-            "q" => self.set_mode(Mode::Exit),
-            "w" => {
-                if let Some(buffer) = &self.buffer {
-                    // TODO: take alternative path from w arguments here
-                    let path = buffer.source_path().clone().unwrap();
-                    log!(format!("{:?}", buffer.write(&path)));
+        if self.buffer.is_none() {
+            return;
+        }
+        if let Ok(_) = self
+            .command_manager
+            .dispatch(self.buffer.as_mut().unwrap(), &self.command_buffer)
+        {
+        } else {
+            match self.command_buffer.as_ref() {
+                "q" => {
+                    self.set_mode(Mode::Exit);
+                    return;
                 }
-            }
-            cmd => {
-                log!(format!("no action for command `{}`", cmd));
-                self.set_mode(Mode::View);
+                "w" => {
+                    if let Some(buffer) = &self.buffer {
+                        // TODO: take alternative path from w arguments here
+                        let path = buffer.source_path().clone().unwrap();
+                        log!(format!("{:?}", buffer.write(&path)));
+                    }
+                }
+                cmd => log!(format!("no action for command `{}`", cmd)),
             }
         }
+        self.set_mode(Mode::View);
     }
 
     pub fn command_push_char(&mut self, c: char)
     {
-        log!(format!("got {}", c));
+        log!("got {}", c);
         match c {
             ':' => self.set_mode(Mode::Command),
             'i' => self.set_mode(Mode::Insert),
-            _ => self.command_buffer.push(c),
+            _ => {
+                self.command_buffer.push(c);
+                if self.buffer.is_some()
+                    && self
+                        .command_manager
+                        .dispatch(self.buffer.as_mut().unwrap(), &self.command_buffer)
+                        .is_ok()
+                {
+                    self.command_buffer.clear();
+                }
+            }
         }
     }
 
     fn set_mode(&mut self, mode: Mode)
     {
-        log!(format!("new mode {}", mode));
+        log!("new mode {}", mode);
         self.mode = mode;
         self.command_buffer.clear();
     }

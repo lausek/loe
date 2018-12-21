@@ -1,5 +1,3 @@
-use crate::app::App;
-
 pub enum Mode
 {
     View,
@@ -13,9 +11,9 @@ impl std::fmt::Display for Mode
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error>
     {
         match self {
-            Command => write!(f, "CMD"),
-            Insert => write!(f, "INSERT"),
-            View => write!(f, "VIEW"),
+            Mode::Command => write!(f, "CMD"),
+            Mode::Insert => write!(f, "INSERT"),
+            Mode::View => write!(f, "VIEW"),
             _ => write!(f, ""),
         }
     }

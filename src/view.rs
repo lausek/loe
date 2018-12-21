@@ -1,6 +1,4 @@
-use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Arc;
-use std::thread;
 use std::vec::IntoIter;
 
 use crate::terminal::rustbox::RustBoxTerminal;
@@ -49,10 +47,9 @@ impl View
 
     pub fn render_status(&mut self, cursor: (i64, i64), row: i64, status_text: &str)
     {
-        let (cx, cy) = cursor;
         let status_color = (rustbox::Color::Black, rustbox::Color::Green);
         self.terminal
-            .print((0, row), STYLE_NORMAL, status_color, status_text.as_ref());
+            .print((0, row), STYLE_NORMAL, status_color, &status_text);
     }
 
     pub fn render_buffer(

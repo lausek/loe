@@ -6,6 +6,7 @@ extern crate rustbox;
 mod macros;
 mod app;
 mod buffer;
+mod cmd;
 mod config;
 mod input;
 mod mode;
