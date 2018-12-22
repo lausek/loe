@@ -19,9 +19,7 @@ impl ForeignPlugin
     {
         if let Ok(library) = Library::new(path) {
             // TODO: cache library symbols
-            let plugin = Box::new(Self {
-                library,
-            });
+            let plugin = Box::new(Self { library });
 
             Ok(plugin)
         } else {
@@ -35,8 +33,9 @@ impl Plugin for ForeignPlugin
     fn commands(&self) -> Vec<String>
     {
         unsafe {
-            let commands: Symbol<CommandsCallback> = self.library.get(b"commands").unwrap();
-            commands()
+            self.library
+                .get::<Symbol<CommandsCallback>>(b"commands")
+                .map_or_else(|_| vec![], |commands| commands())
         }
     }
 

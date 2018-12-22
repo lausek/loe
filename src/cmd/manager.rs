@@ -28,6 +28,7 @@ impl CommandManager
         let rc_plugin = {
             let cmds = plugin.commands().into_iter();
             let rc = Rc::from(Mutex::new(plugin));
+            // TODO: test if all cmds can be added without collision
             for cmd in cmds {
                 log!("defining cmd {}", cmd);
                 self.register_command(cmd, Rc::clone(&rc))?;
@@ -38,7 +39,7 @@ impl CommandManager
         Ok(())
     }
 
-    pub fn register_command<T>(&mut self, cmd: T, plugin: SharedPlugin) -> Result<(), String>
+    fn register_command<T>(&mut self, cmd: T, plugin: SharedPlugin) -> Result<(), String>
     where
         T: Into<String> + Eq + std::hash::Hash,
         String: std::borrow::Borrow<T>,

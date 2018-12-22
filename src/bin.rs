@@ -1,3 +1,5 @@
+#![feature(result_map_or_else)]
+
 #[macro_use]
 extern crate lazy_static;
 extern crate libloading;
