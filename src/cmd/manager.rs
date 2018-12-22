@@ -23,18 +23,18 @@ impl CommandManager
         }
     }
 
-    pub fn add_plugin(&mut self, mut plugin: Box<dyn Plugin>) -> Result<(), String>
+    pub fn add_plugin(&mut self, plugin: Box<dyn Plugin>) -> Result<(), String>
     {
         let rc_plugin = {
             let cmds = plugin.commands().into_iter();
             let rc = Rc::from(Mutex::new(plugin));
             for cmd in cmds {
+                log!("defining cmd {}", cmd);
                 self.register_command(cmd, Rc::clone(&rc))?;
             }
             rc
         };
         self.plugins.push(rc_plugin);
-        log!("added plugin");
         Ok(())
     }
 
@@ -52,9 +52,8 @@ impl CommandManager
 
     pub fn dispatch(&mut self, buffer: &mut Buffer, cmd: &str) -> Result<(), String>
     {
-        if let Some(mut plugin) = self.commands.get_mut(cmd) {
-            plugin.lock().unwrap().dispatch(buffer, cmd);
-            Ok(())
+        if let Some(plugin) = self.commands.get_mut(cmd) {
+            plugin.lock().unwrap().dispatch(buffer, cmd)
         } else {
             Err("command not found".to_string())
         }

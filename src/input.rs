@@ -1,3 +1,5 @@
+pub use libloe::CursorMove;
+
 #[derive(Debug, PartialEq)]
 pub enum Event
 {
@@ -25,12 +27,4 @@ pub enum Key
     AnyChar,
     Char(char),
     Ctrl(char),
-}
-
-pub enum CursorMove
-{
-    Absolute(i64, i64),
-    Relative(i64, i64),
-    EndOfRow(i64),
-    CurrentRow(i64),
 }

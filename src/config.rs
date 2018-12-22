@@ -1,17 +1,15 @@
-pub struct Config {}
+#[derive(Debug, Default)]
+pub struct Config
+{
+    pub plugin_path: Option<String>,
+}
 
 impl Config
 {
-    pub fn from_path(path: &str) -> Result<Self, std::io::Error>
+    pub fn from_path(_path: &str) -> Result<Self, std::io::Error>
     {
-        Ok(Config::default())
-    }
-}
-
-impl Default for Config
-{
-    fn default() -> Self
-    {
-        Self {}
+        let config = Self::default();
+        // TODO: read config from file here
+        Ok(config)
     }
 }

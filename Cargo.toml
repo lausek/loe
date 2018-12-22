@@ -5,7 +5,9 @@ authors = ["lausek <root@lausek.eu>"]
 edition = "2018"
 
 [dependencies]
+libloe = { path = "../libloe" }
 lazy_static = "1.2.0"
+libloading = "0.5"
 rustbox = "^0.11.0"
 
 [[bin]]

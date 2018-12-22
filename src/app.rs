@@ -2,10 +2,10 @@ use std::sync::mpsc::{channel, Receiver};
 use std::thread;
 
 use crate::buffer::Buffer;
-use crate::cmd::{CommandManager, StandardPlugin};
+use crate::cmd::{CommandManager, ForeignPlugin, StandardPlugin};
 use crate::config::Config;
 use crate::input::{CursorMove::*, Event, Key::*};
-use crate::mode::{Mode, Mode::*};
+use crate::mode::Mode;
 use crate::view::View;
 
 pub struct App
@@ -14,7 +14,6 @@ pub struct App
     pub(crate) command_buffer: String,
     config: Config,
     buffer: Option<Buffer>,
-    current_buffer: Option<String>,
     command_manager: CommandManager,
     margin: (i64, i64),
     events: Receiver<Event>,
@@ -30,7 +29,6 @@ impl App
         let mut app = Self {
             config,
             buffer: None,
-            current_buffer: None,
             command_buffer: String::new(),
             command_manager: CommandManager::new(),
             margin: (5, 0),
@@ -46,7 +44,31 @@ impl App
             }
         });
 
-        app.command_manager.add_plugin(StandardPlugin::load());
+        app.command_manager
+            .add_plugin(StandardPlugin::load())
+            .unwrap();
+
+        if let Some(plugin_dir_path) = app.config.plugin_path.as_ref() {
+            log!("plugin_path: {}", plugin_dir_path);
+            if let Ok(plugin_dir) = std::fs::read_dir(plugin_dir_path) {
+                for plugin in plugin_dir {
+                    if plugin.is_err() {
+                        log!("skipping plugin");
+                        continue;
+                    }
+                    let plugin_path = plugin.unwrap().path();
+                    let loaded = ForeignPlugin::load(plugin_path.as_path())
+                        .and_then(|p| app.command_manager.add_plugin(p));
+                    log!(
+                        "loading plugin {:?}: {:?}",
+                        plugin_path,
+                        loaded.err().unwrap_or("okay".to_string())
+                    );
+                }
+            } else {
+                log!("could not load plugin_path");
+            }
+        }
 
         app
     }
@@ -78,7 +100,7 @@ impl App
     {
         self.view.clear();
         if let Some(buffer) = &mut self.buffer {
-            let color = (rustbox::Color::White, rustbox::Color::Black);
+            let _color = (rustbox::Color::White, rustbox::Color::Black);
             let (w, h) = {
                 let size = self.view.size();
                 (size.0, size.1 - 1)
@@ -98,7 +120,7 @@ impl App
                 .set_cursor(self.margin.0 + cursor_pos.0, cursor_pos.1);
 
             let status_text = match &self.mode {
-                Command => format!(
+                Mode::Command => format!(
                     ":{} >> {}c {}r",
                     self.command_buffer, cursor_pos.0, cursor_pos.1
                 ),
@@ -139,7 +161,7 @@ impl App
                         }
                     }
                     evt => match &self.mode {
-                        Command | View => match evt {
+                        Mode::Command | Mode::View => match evt {
                             Event::Key(Char(c)) => self.command_push_char(c),
                             Event::Key(Enter) => self.command_commit(),
                             Event::Key(Esc) => self.set_mode(Mode::View),
@@ -148,25 +170,26 @@ impl App
                             }
                             x => log!(format!("{:?}", x)),
                         },
-                        Insert => match evt {
+                        Mode::Insert => match evt {
                             Event::Key(Char(c)) => {
                                 if let Some(buffer) = &mut self.buffer {
-                                    buffer.insert(c);
+                                    buffer.insert(c).unwrap();
                                 }
                             }
                             Event::Key(Enter) => {
                                 if let Some(buffer) = &mut self.buffer {
-                                    buffer.insert_newline();
+                                    buffer.insert_newline().unwrap();
                                 }
                             }
                             Event::Key(Delete) | Event::Key(Backspace) => {
                                 if let Some(buffer) = &mut self.buffer {
-                                    buffer.remove();
+                                    buffer.remove().unwrap();
                                 }
                             }
                             Event::Key(Esc) => self.set_mode(Mode::View),
                             x => log!(format!("{:?}", x)),
                         },
+                        _ => {}
                     },
                 }
                 log!(self.command_buffer);

@@ -45,7 +45,7 @@ impl View
         self.terminal.set_cursor(x, y);
     }
 
-    pub fn render_status(&mut self, cursor: (i64, i64), row: i64, status_text: &str)
+    pub fn render_status(&mut self, _cursor: (i64, i64), row: i64, status_text: &str)
     {
         let status_color = (rustbox::Color::Black, rustbox::Color::Green);
         self.terminal

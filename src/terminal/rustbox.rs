@@ -72,7 +72,7 @@ impl Terminal for RustBoxTerminal
         }
     }
 
-    fn print(&self, position: Position, style: Style, color: crate::terminal::Color, content: &str)
+    fn print(&self, position: Position, _style: Style, color: crate::terminal::Color, content: &str)
     {
         let style = rustbox::Style::empty();
         let (fg, bg) = color;
