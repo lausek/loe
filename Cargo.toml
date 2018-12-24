@@ -6,9 +6,13 @@ edition = "2018"
 
 [dependencies]
 libloe = { git = "https://github.com/lausek/libloe" }
-lazy_static = "1.2.0"
-libloading = "0.5"
+dirs = "^1.0.4"
+lazy_static = "^1.2.0"
+libloading = "^0.5"
 rustbox = "^0.11.0"
+serde = "*"
+serde_derive = "^1.0"
+toml = "^0.4"
 
 [[bin]]
 name = "loe"

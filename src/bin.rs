@@ -1,10 +1,11 @@
 #![feature(result_map_or_else)]
 #![allow(clippy::string_lit_as_bytes)]
 
-#[macro_use]
 extern crate lazy_static;
 extern crate libloading;
 extern crate rustbox;
+extern crate serde_derive;
+extern crate toml;
 
 #[macro_use]
 mod macros;
@@ -20,13 +21,22 @@ mod view;
 use self::app::App;
 use self::config::Config;
 
-const CONFIG_PATH: &str = "~/.config/loe";
+const CONFIG_PATH: &str = "~/.config/loe/config";
 
-fn main() -> Result<(), std::io::Error>
+fn main()
 {
-    let mut config = Config::from_path(CONFIG_PATH)?;
+    // TODO: try reading this from program arguments
+    let config_path = CONFIG_PATH;
+    let config = match Config::from_path(config_path) {
+        Ok(c) => c,
+        Err(e) => {
+            log!("could not load configuration from `{}`", config_path);
+            log!("got error: {:?}", e);
+            Config::default()
+        }
+    };
+
+    log!("{:?}", config);
 
     App::new(config).with_args(std::env::args()).run().unwrap();
-
-    Ok(())
 }

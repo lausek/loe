@@ -1,6 +1,8 @@
 use std::sync::Mutex;
 use std::time::SystemTime;
 
+use lazy_static::lazy_static;
+
 lazy_static! {
     pub static ref LOGFILE: Mutex<std::fs::File> =
         { Mutex::new(std::fs::File::create("log").unwrap()) };
