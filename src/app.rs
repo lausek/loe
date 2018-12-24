@@ -62,7 +62,7 @@ impl App
                     log!(
                         "loading plugin {:?}: {:?}",
                         plugin_path,
-                        loaded.err().unwrap_or("okay".to_string())
+                        loaded.err().unwrap_or_else(|| "okay".to_string())
                     );
                 }
             } else {
@@ -73,9 +73,9 @@ impl App
         app
     }
 
-    pub fn with_args(mut self, args: std::env::Args) -> Self
+    pub fn with_args(mut self, mut args: std::env::Args) -> Self
     {
-        if let Some(arg) = args.into_iter().skip(1).next() {
+        if let Some(arg) = args.nth(1) {
             self.buffer = Buffer::load(&arg).or_else(|_| Buffer::create(&arg)).ok();
         }
         self
@@ -204,9 +204,10 @@ impl App
         if self.buffer.is_none() {
             return;
         }
-        if let Ok(_) = self
+        if self
             .command_manager
             .dispatch(self.buffer.as_mut().unwrap(), &self.command_buffer)
+            .is_ok()
         {
         } else {
             match self.command_buffer.as_ref() {

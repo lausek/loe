@@ -15,9 +15,15 @@ impl StandardPlugin
 
 impl Plugin for StandardPlugin
 {
+    fn name(&self) -> &'static str
+    {
+        // TODO: lookup global variable in plugin?
+        "StandardPlugin"
+    }
+
     fn commands(&self) -> Vec<String>
     {
-        vec!["h", "l", "j", "k", "0", "$"]
+        vec!["h", "l", "j", "k", "0", "$", "gg", "G", "H", "M", "L"]
             .into_iter()
             .map(|c| c.to_string())
             .collect::<Vec<_>>()
@@ -33,7 +39,12 @@ impl Plugin for StandardPlugin
             "k" => buffer.move_cursor(Relative(0, -1)),
             "0" => buffer.move_cursor(CurrentRow(0)),
             "$" => buffer.move_cursor(CurrentRow(i64::max_value())),
-            _ => log!("hello from standard plugin"),
+            "gg" => buffer.move_cursor(Absolute(0, 0)),
+            "G" => {
+                let last = (buffer.content_len() - 1) as i64;
+                buffer.move_cursor(Absolute(0, last));
+            }
+            other => log!("cmd undefined: {}", other),
         }
         Ok(())
     }

@@ -36,6 +36,11 @@ impl Buffer
         &self.lbuffer.src_path
     }
 
+    pub fn content_len(&self) -> usize
+    {
+        self.lbuffer.content.len()
+    }
+
     pub fn insert(&mut self, c: char) -> Result<(), &'static str>
     {
         libloe::insert(&mut self.lbuffer, c)

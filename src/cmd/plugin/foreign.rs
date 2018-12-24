@@ -6,7 +6,7 @@ use crate::buffer::Buffer;
 use crate::cmd::plugin::{Plugin, PluginResult};
 
 pub type CommandsCallback = unsafe extern "C" fn() -> Vec<String>;
-pub type DispatchCallback = unsafe extern "C" fn(&mut Buffer, &str) -> u32;
+pub type DispatchCallback = unsafe extern "C" fn(&mut Buffer, &str) -> libloe::DispatchResult;
 
 pub struct ForeignPlugin
 {
@@ -30,6 +30,12 @@ impl ForeignPlugin
 
 impl Plugin for ForeignPlugin
 {
+    fn name(&self) -> &'static str
+    {
+        // TODO: lookup global variable in plugin?
+        "ForeignPlugin"
+    }
+
     fn commands(&self) -> Vec<String>
     {
         unsafe {
@@ -42,10 +48,13 @@ impl Plugin for ForeignPlugin
     fn dispatch(&mut self, buffer: &mut Buffer, cmd: &str) -> PluginResult<()>
     {
         unsafe {
-            let dispatch: Symbol<DispatchCallback> = self.library.get(b"dispatch").unwrap();
-            dispatch(buffer, cmd);
+            self.library
+                .get::<Symbol<DispatchCallback>>(b"dispatch")
+                .map_or_else(
+                    |_| Err(format!("no dispatch function in plugin `{}`", self.name())),
+                    |dispatch| dispatch(buffer, cmd),
+                )
         }
-        Ok(())
     }
 
     fn unload(mut self)
