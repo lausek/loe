@@ -5,8 +5,10 @@ use libloading::{Library, Symbol};
 use crate::buffer::Buffer;
 use crate::cmd::plugin::{Plugin, PluginResult};
 
+pub type NameCallback = unsafe extern "C" fn() -> &'static str;
 pub type CommandsCallback = unsafe extern "C" fn() -> Vec<String>;
 pub type DispatchCallback = unsafe extern "C" fn(&mut Buffer, &str) -> libloe::DispatchResult;
+pub type UnloadCallback = unsafe extern "C" fn();
 
 pub struct ForeignPlugin
 {
@@ -32,8 +34,11 @@ impl Plugin for ForeignPlugin
 {
     fn name(&self) -> &'static str
     {
-        // TODO: lookup global variable in plugin?
-        "ForeignPlugin"
+        unsafe {
+            self.library
+                .get::<Symbol<NameCallback>>(b"name")
+                .map_or_else(|_| "ForeignPlugin <not_named>", |name| name())
+        }
     }
 
     fn commands(&self) -> Vec<String>

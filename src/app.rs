@@ -2,7 +2,7 @@ use std::sync::mpsc::{channel, Receiver};
 use std::thread;
 
 use crate::buffer::Buffer;
-use crate::cmd::{CommandManager, ForeignPlugin, StandardPlugin};
+use crate::cmd::{CommandManager, ForeignPlugin, Plugin, StandardPlugin};
 use crate::config::Config;
 use crate::input::{CursorMove::*, Event, Key::*};
 use crate::mode::Mode;
@@ -57,13 +57,15 @@ impl App
                         continue;
                     }
                     let plugin_path = plugin.unwrap().path();
-                    let loaded = ForeignPlugin::load(plugin_path.as_path())
-                        .and_then(|p| app.command_manager.add_plugin(p));
-                    log!(
-                        "loading plugin {:?}: {:?}",
-                        plugin_path,
-                        loaded.err().unwrap_or_else(|| "okay".to_string())
-                    );
+                    let (plugin_name, plugin_state) =
+                        if let Ok(plugin) = ForeignPlugin::load(plugin_path.as_path()) {
+                            let name = (*plugin).name();
+                            let added = app.command_manager.add_plugin(plugin);
+                            (name, if added.is_ok() { "okay" } else { "failed" })
+                        } else {
+                            ("<noname>", "failed")
+                        };
+                    log!("loading plugin {}: {:?}", plugin_name, plugin_state);
                 }
             } else {
                 log!("could not load plugin_path");
