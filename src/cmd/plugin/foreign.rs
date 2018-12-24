@@ -37,7 +37,7 @@ impl Plugin for ForeignPlugin
         unsafe {
             self.library
                 .get::<Symbol<NameCallback>>(b"name")
-                .map_or_else(|_| "ForeignPlugin <not_named>", |name| name())
+                .map_or_else(|_| "ForeignPlugin <noname>", |name| name())
         }
     }
 
@@ -64,5 +64,10 @@ impl Plugin for ForeignPlugin
 
     fn unload(mut self)
     {
+        unsafe {
+            if let Ok(unload) = self.library.get::<Symbol<UnloadCallback>>(b"unload") {
+                unload();
+            }
+        }
     }
 }
