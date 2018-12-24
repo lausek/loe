@@ -24,7 +24,7 @@ impl Config
     {
         let mut path_buf = std::path::PathBuf::new();
         // TODO: search for more generic solution
-        if path.starts_with("~") {
+        if path.starts_with('~') {
             path_buf.push(dirs::home_dir().unwrap());
             path_buf.push(&path[2..]);
         } else {

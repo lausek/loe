@@ -27,14 +27,11 @@ fn main()
 {
     // TODO: try reading this from program arguments
     let config_path = CONFIG_PATH;
-    let config = match Config::from_path(config_path) {
-        Ok(c) => c,
-        Err(e) => {
-            log!("could not load configuration from `{}`", config_path);
-            log!("got error: {:?}", e);
-            Config::default()
-        }
-    };
+    let config = Config::from_path(config_path).unwrap_or_else(|err| {
+        log!("could not load configuration from `{}`", config_path);
+        log!("got error: {:?}", err);
+        Config::default()
+    });
 
     log!("{:?}", config);
 
