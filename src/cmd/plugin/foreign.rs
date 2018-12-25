@@ -1,14 +1,10 @@
 use std::path::Path;
 
 use libloading::{Library, Symbol};
+use libloe::plugin::*;
 
 use crate::buffer::Buffer;
 use crate::cmd::plugin::{Plugin, PluginResult};
-
-pub type NameCallback = unsafe extern "C" fn() -> &'static str;
-pub type CommandsCallback = unsafe extern "C" fn() -> Vec<String>;
-pub type DispatchCallback = unsafe extern "C" fn(&mut Buffer, &str) -> libloe::DispatchResult;
-pub type UnloadCallback = unsafe extern "C" fn();
 
 pub struct ForeignPlugin
 {
@@ -57,7 +53,7 @@ impl Plugin for ForeignPlugin
                 .get::<Symbol<DispatchCallback>>(b"dispatch")
                 .map_or_else(
                     |_| Err(format!("no dispatch function in plugin `{}`", self.name())),
-                    |dispatch| dispatch(buffer, cmd),
+                    |dispatch| dispatch(buffer.inner_mut(), cmd),
                 )
         }
     }

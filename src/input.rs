@@ -1,4 +1,4 @@
-pub use libloe::CursorMove;
+pub use libloe::input::CursorMove;
 
 #[derive(Debug, PartialEq)]
 pub enum Event

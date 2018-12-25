@@ -41,6 +41,11 @@ impl Buffer
         self.lbuffer.content.len()
     }
 
+    pub fn inner_mut(&mut self) -> &mut libloe::Buffer
+    {
+        &mut self.lbuffer
+    }
+
     pub fn insert(&mut self, c: char) -> Result<(), &'static str>
     {
         libloe::insert(&mut self.lbuffer, c)
