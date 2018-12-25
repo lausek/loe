@@ -1,9 +1,11 @@
-mod foreign;
+mod dynamic;
+mod manager;
 mod standard;
 
 use crate::buffer::Buffer;
 
-pub use self::foreign::ForeignPlugin;
+pub use self::dynamic::DynamicPlugin;
+pub use self::manager::CommandManager;
 pub use self::standard::StandardPlugin;
 
 pub type PluginResult<T> = Result<T, String>;

@@ -11,10 +11,10 @@ extern crate toml;
 mod macros;
 mod app;
 mod buffer;
-mod cmd;
 mod config;
 mod input;
 mod mode;
+mod plugin;
 mod terminal;
 mod view;
 

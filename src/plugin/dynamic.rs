@@ -4,14 +4,14 @@ use libloading::{Library, Symbol};
 use libloe::plugin::*;
 
 use crate::buffer::Buffer;
-use crate::cmd::plugin::{Plugin, PluginResult};
+use crate::plugin::{Plugin, PluginResult};
 
-pub struct ForeignPlugin
+pub struct DynamicPlugin
 {
     library: Library,
 }
 
-impl ForeignPlugin
+impl DynamicPlugin
 {
     pub fn load(path: &Path) -> PluginResult<Box<Self>>
     {
@@ -26,7 +26,7 @@ impl ForeignPlugin
     }
 }
 
-impl Plugin for ForeignPlugin
+impl Plugin for DynamicPlugin
 {
     fn name(&self) -> &'static str
     {

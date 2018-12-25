@@ -2,10 +2,10 @@ use std::sync::mpsc::{channel, Receiver};
 use std::thread;
 
 use crate::buffer::Buffer;
-use crate::cmd::{CommandManager, ForeignPlugin, Plugin, StandardPlugin};
 use crate::config::Config;
 use crate::input::{CursorMove::*, Event, Key::*};
 use crate::mode::Mode;
+use crate::plugin::{CommandManager, DynamicPlugin, Plugin, StandardPlugin};
 use crate::view::View;
 
 pub struct App
@@ -58,7 +58,7 @@ impl App
                     }
                     let plugin_path = plugin.unwrap().path();
                     let (plugin_name, plugin_state) =
-                        if let Ok(plugin) = ForeignPlugin::load(plugin_path.as_path()) {
+                        if let Ok(plugin) = DynamicPlugin::load(plugin_path.as_path()) {
                             let name = (*plugin).name();
                             let added = app.command_manager.add_plugin(plugin);
                             (name, if added.is_ok() { "okay" } else { "failed" })

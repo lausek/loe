@@ -1,7 +1,5 @@
 use crate::buffer::Buffer;
-use crate::cmd::plugin::PluginResult;
-
-use crate::cmd::Plugin;
+use crate::plugin::{Plugin, PluginResult};
 
 pub struct StandardPlugin {}
 

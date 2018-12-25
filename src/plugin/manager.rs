@@ -3,7 +3,7 @@ use std::rc::Rc;
 use std::sync::Mutex;
 
 use crate::buffer::Buffer;
-use crate::cmd::plugin::Plugin;
+use crate::plugin::Plugin;
 
 pub type SharedPlugin = Rc<Mutex<Box<dyn Plugin>>>;
 
