@@ -47,9 +47,22 @@ impl View
 
     pub fn render_status(&mut self, _cursor: (i64, i64), row: i64, status_text: &str)
     {
-        let status_color = (rustbox::Color::Black, rustbox::Color::Green);
+        let status_color = (rustbox::Color::Black, rustbox::Color::Red);
         self.terminal
             .print((0, row), STYLE_NORMAL, status_color, &status_text);
+
+        {
+            let status_len = status_text.len();
+            let padding_len = self.terminal.size().0 - status_len;
+
+            let padding_text = (0..padding_len).map(|_| " ").collect::<String>();
+            self.terminal.print(
+                (status_len as i64, row),
+                STYLE_NORMAL,
+                status_color,
+                &padding_text,
+            );
+        }
     }
 
     pub fn render_buffer(
