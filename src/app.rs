@@ -185,7 +185,7 @@ impl App
                             }
                             Event::Key(Delete) | Event::Key(Backspace) => {
                                 if let Some(buffer) = &mut self.buffer {
-                                    buffer.remove().unwrap();
+                                    buffer.remove();
                                 }
                             }
                             Event::Key(Esc) => self.set_mode(Mode::View),
