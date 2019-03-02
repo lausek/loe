@@ -5,6 +5,7 @@ authors = ["lausek <root@lausek.eu>"]
 edition = "2018"
 
 [dependencies]
+#libloe = { path = "../libloe" }
 libloe = { git = "https://github.com/lausek/libloe" }
 dirs = "^1.0.4"
 lazy_static = "^1.2.0"
